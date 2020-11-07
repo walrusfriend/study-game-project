@@ -4,9 +4,6 @@ extern void restart(Game* old_game);
 
 Game::Game()
 {
-    // set random seed
-    srand(time(0));
-
     // create a scene
     scene = new QGraphicsScene;
     scene->setSceneRect(0, 0, 800, 600);
@@ -16,40 +13,49 @@ Game::Game()
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setFixedSize(800, 600);
 
-
     // create a player
-    player = new Player(QPixmap(":/image/player.png"));
-    player->setPos(400, 300);
+    player = new Player();
     scene->addItem(player);
 
     // make the player focusable and set him to be the current focus
     player->setFlag(QGraphicsItem::ItemIsFocusable);
     player->setFocus();
 
-    // spawn enemies
-    spawnEnemies(5);
+    // add health bar to the scene
+    scene->addItem(player->health_bar);
 
     // draw wall frame
-    //walls = new Walls;
-    //scene->addItem(walls);
     drawHorizontalWall(0, 800, 0);
     drawHorizontalWall(0, 800, 600 - 20);
     drawVerticalWall(0, 600, 0);
     drawVerticalWall(0, 600, 800 - 20);
 
-    // add health bar to the scene
-    scene->addItem(player->health_bar);
+    // spawn enemies
+    spawnEnemies(10);
 
 }
 
 void Game::spawnEnemies(int number_of_enemies)
 {
-    number_of_enemies = 5;
     for(int i = 0; i < number_of_enemies; i++) {
+        // step 1. Create the enemy
         Enemy* enemy = new Enemy(QPixmap(":/image/enemy.png"));
+
+        // step 2. Generate the position
+        enemy->setPos(rand() % (800 - 80), rand() % (600 - 40));
+
+        // step 3. Place the enemy
         enemies.push_back(enemy);
-        enemies[i]->setPos(rand() % (800 - 80), rand() % (600 - 40));
-        scene->addItem(enemies[i]);
+        scene->addItem(enemies.back());
+
+        // step 4. Check the collision
+        QList<QGraphicsItem*> colliding_items = enemy->collidingItems();
+        if(colliding_items.size()) {
+            i--;
+            scene->removeItem(enemies.back());
+            delete enemy;
+            continue;
+        }
     }
 }
 
@@ -102,11 +108,11 @@ void Game::gameover()
     vbl->addLayout(hbl);
 
     // linking
-    QObject::connect(pbt_exit, SIGNAL(clicked()),  SLOT(close()));
-    QObject::connect(pbt_exit, SIGNAL(clicked()), gameover_win, SLOT(close()));
-
     QObject::connect(pbt_restart, SIGNAL(clicked()), gameover_win, SLOT(close()));
     QObject::connect(pbt_restart, SIGNAL(clicked()), SLOT(restart_g()));
+
+    //QObject::connect(pbt_exit, SIGNAL(clicked()), gameover_win, SLOT(close()));
+    QObject::connect(pbt_exit, SIGNAL(clicked()), SLOT(confirmWindow()));
 
     gameover_win->setLayout(vbl);
 
@@ -118,3 +124,40 @@ void Game::restart_g()
 {
     restart(this);
 }
+
+void Game::confirmWindow(){
+    QDialog* confirm_win = new QDialog;
+    confirm_win->setAttribute(Qt::WA_DeleteOnClose);
+    int widht = 200;
+    int height = 100;
+    confirm_win->setGeometry(
+                (QApplication::desktop()->screenGeometry().width() - widht) / 2,
+                (QApplication::desktop()->screenGeometry().height() - height) / 2,
+                widht, height);
+
+    QLabel* message = new QLabel;
+    message->setText("You're sure?");
+    message->setAlignment(Qt::AlignCenter);
+
+    QPushButton* pbt_yes = new QPushButton("&Yes");
+    QPushButton* pbt_no = new QPushButton("&No");
+
+    QHBoxLayout* hbl = new QHBoxLayout;
+    hbl->addWidget(pbt_yes);
+    hbl->addWidget(pbt_no);
+
+    QVBoxLayout* vbl = new QVBoxLayout;
+    vbl->addWidget(message);
+    vbl->addLayout(hbl);
+
+    // linking
+    QObject::connect(pbt_yes, SIGNAL(clicked()), confirm_win, SLOT(close()));
+    QObject::connect(pbt_yes, SIGNAL(clicked()), qApp, SLOT(closeAllWindows()));
+
+    QObject::connect(pbt_no, SIGNAL(clicked()), confirm_win, SLOT(close()));
+
+    confirm_win->setLayout(vbl);
+
+    confirm_win->exec();
+}
+

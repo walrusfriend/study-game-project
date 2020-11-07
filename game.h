@@ -15,6 +15,11 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QLayout>
+#include <QList>
+#include <QGraphicsItem>
+#include <QDebug>
+#include <QTimer>
+#include <QThread>
 
 #include "player.h"
 #include "enemy.h"
@@ -40,6 +45,7 @@ public:
 
 public slots:
     void restart_g();
+    void confirmWindow();
 
 };
 

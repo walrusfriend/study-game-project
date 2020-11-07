@@ -18,15 +18,19 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     enemy.cpp \
     game.cpp \
+    interface.cpp \
     main.cpp \
     player.cpp \
-    walls.cpp
+    walls.cpp \
+    weapon.cpp
 
 HEADERS += \
     enemy.h \
     game.h \
+    interface.h \
     player.h \
-    walls.h
+    walls.h \
+    weapon.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
